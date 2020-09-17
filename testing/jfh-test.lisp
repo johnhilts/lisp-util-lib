@@ -18,7 +18,7 @@
                    ,@(mapcar #'(lambda (form) `(progn ,@(test-r (cadr form) (caddr form) (cadddr form)))) (nthcdr 3 form)))
                 (unless (null form)
                   `(format t "~&The form: ~a ~a!" ',form (if (eval ,form) "passes" "fails"))))))))
-    `(progn ,@(test-r key text (car form)))))
+    `(progn ,@(mapcar #'(lambda (e) `(progn ,@(test-r key text e))) form))))
 
 (defun an-example ()
   (test-spec :category "arithmatic"
@@ -28,4 +28,7 @@
       (test-spec :it "should add together 2 other numbers"
         (= 10 (+ 6 4)))
       (test-spec :it "should add together 3 numbers!"
-        (= 12 (+ 6 2 4))))))
+        (= 12 (+ 6 2 4))))
+    (test-spec :description "subtraction"
+      (test-spec :it "should subtract 1 number from another"
+        (= 7 (- 15 8))))))
