@@ -5,11 +5,12 @@
 
 (defmacro test-spec (key text &body form)
   (labels
-      ((test-r (key text form)
-         (format t "~&FORM: ~a~%" form)
+      ((get-indent (key)
+         (make-string (or (cdr (assoc key '((:category . 1) (:description . 2) (:it . 3)))) 5) :initial-element #\Space))
+       (test-r (key text form)
          (list
-          (when (or (equal :description key) (equal :category key) (equal :it key))
-            `(format t "~&~a~%" ,text))
+          (when (or (equal :category key) (equal :description key) (equal :it key))
+            `(format t "~&~a~a~%" ,(get-indent key) ,text))
 
           (when (listp form)
             (if (equal (car form) 'test-spec)
@@ -17,7 +18,7 @@
                    ,@(test-r (cadr form) (caddr form) ())
                    ,@(mapcar #'(lambda (form) `(progn ,@(test-r (cadr form) (caddr form) (cadddr form)))) (nthcdr 3 form)))
                 (unless (null form)
-                  `(format t "~&The form: ~a ~a!" ',form (if (eval ,form) "passes" "fails"))))))))
+                  `(format t "~&~aThe form: ~a ~a!" ,(get-indent "") ',form (if (eval ,form) "passes" "fails"))))))))
     `(progn ,@(mapcar #'(lambda (e) `(progn ,@(test-r key text e))) form))))
 
 (defun an-example ()
