@@ -1,5 +1,6 @@
 (defpackage #:jfh-test
-  (:use #:common-lisp))
+  (:use #:common-lisp)
+  (:export #:test-spec))
 
 (in-package #:jfh-test)
 
@@ -10,7 +11,9 @@
        (test-r (key text form)
          (list
           (when (or (equal :category key) (equal :description key) (equal :it key))
-            `(format t "~&~a~a~%" ,(get-indent key) ,text))
+            `(format t "~&~a~a" ,(get-indent key) ,text))
+          (unless (equal :it key)
+            (format t "~%"))
 
           (when (listp form)
             (if (equal (car form) 'test-spec)
@@ -18,7 +21,7 @@
                    ,@(test-r (cadr form) (caddr form) ())
                    ,@(mapcar #'(lambda (form) `(progn ,@(test-r (cadr form) (caddr form) (cadddr form)))) (nthcdr 3 form)))
                 (unless (null form)
-                  `(format t "~&~aThe form: ~a ~a!" ,(get-indent "") ',form (if (eval ,form) "passes" "fails"))))))))
+                  `(format t " ... ~a!" (if (eval ,form) "passes" "fails"))))))))
     `(progn ,@(mapcar #'(lambda (e) `(progn ,@(test-r key text e))) form))))
 
 (defun an-example ()
