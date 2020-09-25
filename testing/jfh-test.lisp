@@ -1,8 +1,8 @@
-(defpackage #:jfh-test
-  (:use #:common-lisp)
-  (:export #:test-spec))
+(defpackage :jfh-test
+  (:use :common-lisp)
+  (:export :test-spec))
 
-(in-package #:jfh-test)
+(in-package :jfh-test)
 
 (defmacro test-spec (key text &body form)
   (labels

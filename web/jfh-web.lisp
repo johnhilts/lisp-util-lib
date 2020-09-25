@@ -1,14 +1,10 @@
 ;; install these: (ql:quickload '(parenscript))
 (defpackage :jfh-web
-  (:use :cl :parenscript))
+  (:use :cl :parenscript)
+  (:export :define-ps-with-html-macro)
+  )
 
 (in-package :jfh-web)
-
-
-(defun cons-pair-p (possible-cons)
-  (or
-   (and (consp possible-cons) (atom (cdr possible-cons)))
-   (and (consp possible-cons) (listp (cdr possible-cons)) (equal '~f (cadr possible-cons)))))
 
 (defun define-ps-with-html-macro ()
   (ps
@@ -26,7 +22,12 @@
           ((get-attribute-value (value)
              (if (char= #\( (aref value 0))
                  (read-from-string value)
-                 value)))
+                 value))
+           
+           (cons-pair-p (possible-cons)
+             (or
+              (and (consp possible-cons) (atom (cdr possible-cons)))
+              (and (consp possible-cons) (listp (cdr possible-cons)) (equal '~f (cadr possible-cons))))))
         (labels
             ((process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
                (let* ((tag (car element))
@@ -91,3 +92,5 @@
                           t)))))
 
     (setf (chain window onload) init)))
+
+
