@@ -34,7 +34,6 @@
                  (if (event-attribute-p key)
                      (let ((event-attribute-key (subseq key 2)))
                        `(chain parent-element-id (add-event-listener ,event-attribute-key (chain ,function-name (bind null ,@parameters)) false)))
-                     ;; `(setf (@ ,parent-element ,key) (chain ,function-name ,@parameters))
                      `(set-an-attribute ,parent-element ,key (,function-name ,@parameters)))))
              
              (process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
@@ -86,10 +85,8 @@
                                      (td
                                       (input (id . "(chain checkbox-id (to-string))") (type . "checkbox") (onclick . "(update-todo (chain index (to-string)))"))
                                       (input (id . "test-check") (type . "button") (onclick . "(update-todo 123)"))
-                                      (label (id . "(chain label-id (to-string))") (html-for . "(chain checkbox-id (to-string))") todo))))
-                                
-                                (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
-                                      (todo-label (chain document (get-element-by-id "todo-label"))))))
+                                      (label (id . "(chain label-id (to-string))") (html-for . "(chain checkbox-id (to-string))") todo)))))
+
                               t)))))
 
     (setf (chain window onload) init)))
