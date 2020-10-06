@@ -15,30 +15,44 @@
         (chain parent-element (append-child a-text-node))))
     (defmacro with-html-elements (elements)
       (flet
-          ((get-attribute-value (value)
-             (if (char= #\( (aref value 0))
-                 (read-from-string value)
-                 value))
+          ((expression-attribute-p (value)
+             (char= #\( (aref value 0)))
+           
+           (event-attribute-p (key)
+             (string= "on" (subseq key 0 2)))
            
            (cons-pair-p (possible-cons)
              (or
               (and (consp possible-cons) (atom (cdr possible-cons)))
               (and (consp possible-cons) (listp (cdr possible-cons)) (equal '~f (cadr possible-cons))))))
+
         (labels
-            ((process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
+            ((parse-expression-for-attribute-value (parent-element key expression-string)
+               (let* ((expression (read-from-string expression-string))
+                      (function-name (car expression))
+                      (parameters (cdr expression)))
+                 (if (event-attribute-p key)
+                     (let ((event-attribute-key (subseq key 2)))
+                       `(chain parent-element-id (add-event-listener ,event-attribute-key (chain ,function-name (bind null ,@parameters)) false)))
+                     ;; `(setf (@ ,parent-element ,key) (chain ,function-name ,@parameters))
+                     `(set-an-attribute ,parent-element ,key (,function-name ,@parameters)))))
+             
+             (process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
                (let* ((tag (car element))
                       (parent-element (gensym (concatenate 'string (string-downcase tag) "Element")))
                       (parent-element-parameter (if parent-supplied-p parent (make-symbol "parent-element")))
                       (key-id-parameter (if key-id-supplied-p key-id (if (some #'(lambda (e) (equal (car e) 'key)) (cdr element)) (ps-gensym "-")))))
                  (cons
-                  `(let ((,parent-element (create-an-element ,parent-element-parameter ,(string tag)))))
+                  `(let ((,parent-element (create-an-element ,parent-element-parameter ,(symbol-to-js-string tag)))))
                   (mapcar
                    #'(lambda (e)
                        (cond
                          ((cons-pair-p e)
-                          (let* ((key (string (car e)))
-                                 (value (get-attribute-value (string (cdr e)))))
-                            `(set-an-attribute ,parent-element ,key ,value)))
+                          (let* ((key (symbol-to-js-string (car e)))
+                                 (value (cdr e)))
+                            (if (expression-attribute-p value)
+                                (parse-expression-for-attribute-value parent-element key value)
+                                `(set-an-attribute ,parent-element ,key ,value))))
                          ((stringp e)
                           `(set-text-node ,parent-element ,e))
                          ((listp e)
@@ -47,6 +61,7 @@
                          ((symbolp e)
                           `(set-text-node ,parent-element ,e))))
                    (cdr element))))))
+          
           `(progn ,@(process-tag-r elements)))))))
 
 ;; example
@@ -67,24 +82,14 @@
                               (let ((checkbox-id (+ "todo-check" index))
                                     (label-id (+ "todo-label" index)))                                
                                 (with-html-elements
-                                    (tr (key . index)
-                                        (td
-                                         ;; idea: pass like this: "(updateTodo(chain index (to-string)))"
-                                         ;; reformat into this: "(+ \"updateTodo(\" (chain index (to-string)) \")\")"
-                                         ;; BUT this is really: "(+ "updateTodo(" (chain index (to-string)) ")")" <-- parenscript inside javascript is really "updateTodo(123)"
-                                         ;; then send that mess to read-from-string
-                                         (input (id . "todo-check") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (chain index (to-string)) \")\")"))
-                                         (input (id . "test-check") (type . "button") (onclick . "(updateTodo 123)"))
-                                  (label (id . "todo-label") todo))))
-                          
-                          (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
-                                (todo-label (chain document (get-element-by-id "todo-label"))))
-                            (setf (@ todo-check-box id) checkbox-id
-                                  (@ todo-label id) label-id
-                                  (@ todo-label html-for) checkbox-id)
-                            ;; (chain todo-check-box (add-event-listener "click" (chain update-todo (bind null index)) false)))
-                            ))
-
-                          t)))))
+                                    (tr 
+                                     (td
+                                      (input (id . "(chain checkbox-id (to-string))") (type . "checkbox") (onclick . "(update-todo (chain index (to-string)))"))
+                                      (input (id . "test-check") (type . "button") (onclick . "(update-todo 123)"))
+                                      (label (id . "(chain label-id (to-string))") (html-for . "(chain checkbox-id (to-string))") todo))))
+                                
+                                (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
+                                      (todo-label (chain document (get-element-by-id "todo-label"))))))
+                              t)))))
 
     (setf (chain window onload) init)))
