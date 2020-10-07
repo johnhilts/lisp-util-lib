@@ -23,9 +23,8 @@
            
            (cons-pair-p (possible-cons)
              (or
-              (and (consp possible-cons) (atom (cdr possible-cons)))
-              (and (consp possible-cons) (listp (cdr possible-cons)) (equal '~f (cadr possible-cons))))))
-
+              (and (consp possible-cons) (atom (cdr possible-cons))))))
+              
         (labels
             ((parse-expression-for-attribute-value (parent-element key expression-string)
                (let* ((expression (read-from-string expression-string))
