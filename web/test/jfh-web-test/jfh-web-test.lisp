@@ -153,4 +153,22 @@
 };"))
             ;; (format t "~%***Expected:~%~a~%***~%" expected)
             ;; (format t "~%***Actual:~%~a~%***~%" actual)
+            (string= expected actual)))
+
+        (test-spec :it "eval an expression in a simple table"
+          (setf *ps-gensym-counter* 0)
+          (let ((actual (ps (defun output-simple-table () (jfh::with-html-elements (table (tr (td "(+ 1 2)")))))))
+                (expected
+                 "function outputSimpleTable() {
+    var tableElement0 = createAnElement(parentElement, 'table');
+    var trElement1 = createAnElement(tableElement0, 'tr');
+    var tdElement2 = createAnElement(trElement1, 'td');
+    __PS_MV_REG = [];
+    return setTextNode(tdElement2, 1 + 2);
+};"))
+            ;;
+            (format t "~%***Expected:~%~a~%***~%" expected)
+            ;;
+            (format t "~%***Actual:~%~a~%***~%" actual)
+            
             (string= expected actual)))))))

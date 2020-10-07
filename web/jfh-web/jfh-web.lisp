@@ -15,7 +15,7 @@
         (chain parent-element (append-child a-text-node))))
     (defmacro with-html-elements (elements)
       (flet
-          ((expression-attribute-p (value)
+          ((expression-embedded-in-string-p (value)
              (char= #\( (aref value 0)))
            
            (event-attribute-p (key)
@@ -24,9 +24,15 @@
            (cons-pair-p (possible-cons)
              (or
               (and (consp possible-cons) (atom (cdr possible-cons))))))
-              
+        
         (labels
-            ((parse-expression-for-attribute-value (parent-element key expression-string)
+            ((parse-expression (parent-element expression-string)
+               (let* ((expression (read-from-string expression-string))
+                      (function-name (car expression))
+                      (parameters (cdr expression)))
+                 `(set-text-node ,parent-element (,function-name ,@parameters))))
+
+             (parse-expression-for-attribute-value (parent-element key expression-string)
                (let* ((expression (read-from-string expression-string))
                       (function-name (car expression))
                       (parameters (cdr expression)))
@@ -48,11 +54,13 @@
                          ((cons-pair-p e)
                           (let* ((key (symbol-to-js-string (car e)))
                                  (value (cdr e)))
-                            (if (expression-attribute-p value)
+                            (if (expression-embedded-in-string-p value)
                                 (parse-expression-for-attribute-value parent-element key value)
                                 `(set-an-attribute ,parent-element ,key ,value))))
                          ((stringp e)
-                          `(set-text-node ,parent-element ,e))
+                          (if (expression-embedded-in-string-p e)
+                              (parse-expression parent-element e)
+                              `(set-text-node ,parent-element ,e)))
                          ((listp e)
                           `(progn
                              ,@(process-tag-r e parent-element key-id-parameter)))
@@ -84,7 +92,8 @@
                                      (td
                                       (input (id . "(chain checkbox-id (to-string))") (type . "checkbox") (onclick . "(update-todo (chain index (to-string)))"))
                                       (input (id . "test-check") (type . "button") (onclick . "(update-todo 123)"))
-                                      (label (id . "(chain label-id (to-string))") (html-for . "(chain checkbox-id (to-string))") todo)))))
+                                      (label (id . "(chain label-id (to-string))") (html-for . "(chain checkbox-id (to-string))") todo))
+                                     (td "(+ 1 3)"))))
 
                               t)))))
 
