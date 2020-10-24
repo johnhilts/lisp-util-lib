@@ -21,9 +21,9 @@
            (event-attribute-p (key)
              (string= "on" (subseq key 0 2)))
            
-           (cons-pair-p (possible-cons)
+           (attribute-p (possible-attribute)
              (or
-              (and (consp possible-cons) (atom (cdr possible-cons))))))
+              (and (consp possible-attribute) (atom (cdr possible-attribute))))))
         
         (labels
             ((parse-expression (parent-element expression-string)
@@ -38,8 +38,11 @@
                       (parameters (cdr expression)))
                  (if (event-attribute-p key)
                      (let ((event-attribute-key (subseq key 2)))
-                       `(chain parent-element-id (add-event-listener ,event-attribute-key (chain ,function-name (bind null ,@parameters)) false)))
+                       `(chain ,parent-element (add-event-listener ,event-attribute-key (chain ,function-name (bind null ,@parameters)) false)))
                      `(set-an-attribute ,parent-element ,key (,function-name ,@parameters)))))
+
+             (checked-p (key)
+               (string-equal "checked" key))
              
              (process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
                (let* ((tag (car element))
@@ -51,12 +54,15 @@
                   (mapcar
                    #'(lambda (e)
                        (cond
-                         ((cons-pair-p e)
+                         ((attribute-p e)
                           (let* ((key (symbol-to-js-string (car e)))
                                  (value (cdr e)))
-                            (if (expression-embedded-in-string-p value)
-                                (parse-expression-for-attribute-value parent-element key value)
-                                `(set-an-attribute ,parent-element ,key ,value))))
+                            (cond
+                              ((checked-p key)
+                               `(setf (@ ,parent-element checked) ,(read-from-string value)))
+                              ((expression-embedded-in-string-p value)
+                               (parse-expression-for-attribute-value parent-element key value))
+                              (t `(set-an-attribute ,parent-element ,key ,value)))))
                          ((stringp e)
                           (if (expression-embedded-in-string-p e)
                               (parse-expression parent-element e)
@@ -90,7 +96,7 @@
                                 (with-html-elements
                                     (tr 
                                      (td
-                                      (input (id . "(chain checkbox-id (to-string))") (type . "checkbox") (onclick . "(update-todo (chain index (to-string)))"))
+                                      (input (id . "(chain checkbox-id (to-string))") (type . "checkbox") (onclick . "(update-todo (chain index (to-string)))") (checked . "t"))
                                       (input (id . "test-check") (type . "button") (onclick . "(update-todo 123)"))
                                       (label (id . "(chain label-id (to-string))") (html-for . "(chain checkbox-id (to-string))") todo))
                                      (td "(+ 1 3)"))))
