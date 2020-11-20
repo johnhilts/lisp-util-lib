@@ -22,8 +22,7 @@
              (string= "on" (subseq key 0 2)))
            
            (attribute-p (possible-attribute)
-             (or
-              (and (consp possible-attribute) (atom (cdr possible-attribute))))))
+             (and (consp possible-attribute) (atom (cdr possible-attribute)))))
         
         (labels
             ((parse-expression (parent-element expression-string)
