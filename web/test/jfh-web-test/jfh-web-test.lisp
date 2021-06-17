@@ -147,8 +147,8 @@
           (and
            (setup)
            (let ((actual (ps (defun output-simple-table () (jfh::with-html-elements (table (tr (td "(+ 1 2)")))))))
-                  (expected
-                   "function outputSimpleTable() {
+                 (expected
+                  "function outputSimpleTable() {
     var tableElement13 = createAnElement(parentElement, \"table\");
     var trElement14 = createAnElement(tableElement13, \"tr\");
     var tdElement15 = createAnElement(trElement14, \"td\");
@@ -171,5 +171,18 @@
 };"))
             ;;            (format t "~%***Expected:~%~a~%***~%" expected)
             ;;            (format t "~%***Actual:~%~a~%***~%" actual)
+            
+            (string= expected actual)))
+
+        (test-spec :it "call a function if funcall present"
+          (let ((actual (ps (defun use-funcall () (jfh::with-html-elements (div (funcall #'some-function 1 2 3))))))
+                (expected
+                 "function useFuncall() {
+    var divElement18 = createAnElement(parentElement, \"div\");
+    __PS_MV_REG = [];
+    return setTextNode(divElement18, someFunction(1, 2, 3));
+};"))
+            ;; (format t "~%***Expected:~%~a~%***~%" expected)
+            ;; (format t "~%***Actual:~%~a~%***~%" actual)
             
             (string= expected actual)))))))

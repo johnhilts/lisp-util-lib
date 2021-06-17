@@ -67,8 +67,11 @@
                               (parse-expression parent-element e)
                               `(set-text-node ,parent-element ,e)))
                          ((listp e)
-                          `(progn
-                             ,@(process-tag-r e parent-element key-id-parameter)))
+                          (cond
+                            ((equal 'funcall (car e))
+                             `(set-text-node ,parent-element ,(cdr e)))
+                            (t `(progn
+                                  ,@(process-tag-r e parent-element key-id-parameter)))))
                          ((symbolp e)
                           `(set-text-node ,parent-element ,e))))
                    (cdr element))))))
