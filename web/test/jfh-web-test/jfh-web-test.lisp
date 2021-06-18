@@ -175,12 +175,13 @@
             (string= expected actual)))
 
         (test-spec :it "call a function if funcall present"
-          (let ((actual (ps (defun use-funcall () (jfh::with-html-elements (div (funcall #'some-function 1 2 3))))))
+          (let ((actual (ps (defun use-funcall () (jfh::with-html-elements (div (id . "my-div") (funcall #'some-function "my-div" 1 2 3))))))
                 (expected
                  "function useFuncall() {
     var divElement18 = createAnElement(parentElement, \"div\");
+    setAnAttribute(divElement18, \"id\", \"my-div\");
     __PS_MV_REG = [];
-    return setTextNode(divElement18, someFunction(1, 2, 3));
+    return someFunction(\"my-div\", 1, 2, 3);
 };"))
             ;; (format t "~%***Expected:~%~a~%***~%" expected)
             ;; (format t "~%***Actual:~%~a~%***~%" actual)

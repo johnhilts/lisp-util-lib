@@ -69,7 +69,7 @@
                          ((listp e)
                           (cond
                             ((equal 'funcall (car e))
-                             `(set-text-node ,parent-element ,(cdr e)))
+                             `(progn ,(cdr e)))
                             (t `(progn
                                   ,@(process-tag-r e parent-element key-id-parameter)))))
                          ((symbolp e)
