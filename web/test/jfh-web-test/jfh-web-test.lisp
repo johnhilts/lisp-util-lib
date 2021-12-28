@@ -4,16 +4,18 @@
 
 (import-macros-from-lisp 'with-html-elements)
 
+(setf *js-string-delimiter* #\")
+
 (defun test-with-html-elements ()
   (flet ((setup ()
-           (setf *ps-gensym-counter* 0)
-           (define-ps-with-html-macro)
+           (setf ps:*ps-gensym-counter* 0)
+           (jfh-web:define-ps-with-html-macro)
            t))
     ;;(setup)
-    (test-spec :category "web"
-      (test-spec :description "Lisp -> DOM API"
-        (test-spec :it "create a simple table"
-          (let ((actual (ps (defun output-simple-table () (jfh::with-html-elements (table (tr (td "test")))))))
+    (jfh-testing:test-spec :category "web"
+      (jfh-testing:test-spec :description "Lisp -> DOM API"
+        (jfh-testing:test-spec :it "create a simple table"
+          (let ((actual (ps:ps (defun output-simple-table () (jfh::with-html-elements (table (tr (td "test")))))))
                 (expected
                  "function outputSimpleTable() {
     var tableElement0 = createAnElement(parentElement, \"table\");
@@ -26,28 +28,28 @@
             ;; (format t "~%***Actual:~%~a~%***~%" actual)
             
             (string= expected actual)))
-        (test-spec :it "work with a todo list"
+        (jfh-testing:test-spec :it "work with a todo list"
           (let ((actual
-                 (ps
+                 (ps:ps
                    (defun render-todo-list (todo-list)
-                     (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
+                     (let* ((todo-list-table-body (ps:chain document (get-element-by-id "todo-list-body")))
                             (parent-element todo-list-table-body)
-                            (column-header (chain document (get-element-by-id "todo-list-column-header")))
+                            (column-header (ps:chain document (get-element-by-id "todo-list-column-header")))
                             (count (length todo-list))
                             (use-plural-form (or (> 1 count) (= 0 count))))
                        (clear-children parent-element)
-                       (setf (chain column-header inner-text)
+                       (setf (ps:chain column-header inner-text)
                              (if use-plural-form "To-do Items" "To-do Item"))
-                       (chain todo-list (map
+                       (ps:chain todo-list (map
                                          #'(lambda (todo index)
                                              (let ((checkbox-id (+ "todo-check" index))
                                                    (label-id (+ "todo-label" index)))                                
                                                (jfh::with-html-elements
                                                    (tr
                                                     (td
-                                                     (input (id . "(chain checkbox-id (to-string))") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (chain index (to-string)) \")\")") (checked . "t"))
-                                                     (input (id . "(chain checkbox-id (to-string))") (type . "button") (onclick . "(updateTodo 123)"))
-                                                     (label (id . "(chain label-id (to-string))") todo)))))
+                                                     (input (id . "(ps:chain checkbox-id (to-string))") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (ps:chain index (to-string)) \")\")") (checked . "t"))
+                                                     (input (id . "(ps:chain checkbox-id (to-string))") (type . "button") (onclick . "(updateTodo 123)"))
+                                                     (label (id . "(ps:chain label-id (to-string))") todo)))))
 
                                              t)))))))
                 (expected
@@ -85,26 +87,26 @@
             ;;            (format t "~%***Actual:~%~a~%***~%" actual)
 
             (string= expected actual)))
-        (test-spec :it "work with a todo list and a cleaner way to assign event handlers"
+        (jfh-testing:test-spec :it "work with a todo list and a cleaner way to assign event handlers"
           (let ((actual
-                 (ps
+                 (ps:ps
                    (defun render-todo-list (todo-list)
-                     (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
+                     (let* ((todo-list-table-body (ps:chain document (get-element-by-id "todo-list-body")))
                             (parent-element todo-list-table-body)
-                            (column-header (chain document (get-element-by-id "todo-list-column-header")))
+                            (column-header (ps:chain document (get-element-by-id "todo-list-column-header")))
                             (count (length todo-list))
                             (use-plural-form (or (> 1 count) (= 0 count))))
                        (clear-children parent-element)
-                       (setf (chain column-header inner-text)
+                       (setf (ps:chain column-header inner-text)
                              (if use-plural-form "To-do Items" "To-do Item"))
-                       (chain todo-list (map
+                       (ps:chain todo-list (map
                                          #'(lambda (todo index)
                                              (let ((checkbox-id (+ "todo-check" index))
                                                    (label-id (+ "todo-label" index)))                                
                                                (jfh::with-html-elements
                                                    (tr
                                                     (td
-                                                     (input (id . "todo-check") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (chain index (to-string)) \")\")"))
+                                                     (input (id . "todo-check") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (ps:chain index (to-string)) \")\")"))
                                                      (input (id . "test-check") (type . "button") (onclick . "(updateTodo 123)"))
                                                      (label (id . "todo-label") todo)))))
 
@@ -143,10 +145,10 @@
             ;; (format t "~%***Actual:~%~a~%***~%" actual)
             (string= expected actual)))
 
-        (test-spec :it "eval an expression in a simple table"
+        (jfh-testing:test-spec :it "eval an expression in a simple table"
           (and
            (setup)
-           (let ((actual (ps (defun output-simple-table () (jfh::with-html-elements (table (tr (td "(+ 1 2)")))))))
+           (let ((actual (ps:ps (defun output-simple-table () (jfh::with-html-elements (table (tr (td "(+ 1 2)")))))))
                  (expected
                   "function outputSimpleTable() {
     var tableElement13 = createAnElement(parentElement, \"table\");
@@ -159,9 +161,9 @@
              ;;             (format t "~%***Actual:~%~a~%***~%" actual)
              
              (string= expected actual))))
-
-        (test-spec :it "KNOWN ISSUE - eval a simple span - why do I need to wrap the span in a div???"
-          (let ((actual (ps (defun output-simple-span () (jfh::with-html-elements (div (span "Sample Text."))))))
+        
+        (jfh-testing:test-spec :it "KNOWN ISSUE - eval a simple span - why do I need to wrap the span in a div???"
+          (let ((actual (ps:ps (defun output-simple-span () (jfh::with-html-elements (div (span "Sample Text."))))))
                 (expected
                  "function outputSimpleSpan() {
     var divElement16 = createAnElement(parentElement, \"div\");
@@ -174,8 +176,8 @@
             
             (string= expected actual)))
 
-        (test-spec :it "call a function if funcall present"
-          (let ((actual (ps (defun use-funcall () (jfh::with-html-elements (div (id . "my-div") (funcall #'some-function "my-div" 1 2 3))))))
+        (jfh-testing:test-spec :it "call a function if funcall present"
+          (let ((actual (ps:ps (defun use-funcall () (jfh::with-html-elements (div (id . "my-div") (funcall #'some-function "my-div" 1 2 3))))))
                 (expected
                  "function useFuncall() {
     var divElement18 = createAnElement(parentElement, \"div\");
